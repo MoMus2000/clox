@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "debug.h"
+#include "compile.h"
 #include "vm.h"
 
 VM vm; // We only need one VM so its easier to pass it around
@@ -29,10 +30,9 @@ void initVM(){
 void freeVM(){
 }
 
-InterpretResult interpret(Chunk* chunk){
-  vm.chunk = chunk;
-  vm.ip = vm.chunk->code; // opcodes for the chunk
-  return run();
+InterpretResult interpret(const char* source){
+  compile(source);
+  return INTERPRET_OK;
 }
 
 static InterpretResult run(){

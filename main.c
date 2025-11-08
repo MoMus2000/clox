@@ -8,6 +8,11 @@
 
 static char* readFile(const char* path){
   FILE* file = fopen(path, "rb");
+  if (file == NULL) {
+    fprintf(stderr, "Could not open file \"%s\".\n", path);
+    exit(74);
+  }
+
   fseek(file, 0, SEEK_END); // Move pointer to the end
 
   size_t fileSize = ftell(file); // Not normal p arith since this OS
@@ -30,17 +35,17 @@ static void repl(){
       printf("\n");
       break;
     }
-    /*interpret(line);*/
+    interpret(line);
   }
 }
 
 static void runFile(const char* path){
     char* source = readFile(path);
-    /*InterpretResult result = interpret(source);*/
-    /*free(source);*/
-    /**/
-    /*if(result == INTERPRET_COMPILE_ERROR) exit(65);*/
-    /*if(result == INTERPRET_RUNTIME_ERROR) exit(70);*/
+    InterpretResult result = interpret(source);
+    free(source);
+
+    if(result == INTERPRET_COMPILE_ERROR) exit(65);
+    if(result == INTERPRET_RUNTIME_ERROR) exit(70);
 }
 
 int main(int argc, char** argv){

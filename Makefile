@@ -5,7 +5,7 @@ all:
 	gcc -o build/clox *.c
 
 run:
-	./build/clox
+	./build/clox $(args)
 
 clean:
 	rm -f ./build/*
