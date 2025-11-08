@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "common.h"
 #include "scanner.h"
+#include "hashtable.h"
 
 static bool isAtEnd();
 static char advance();
@@ -29,14 +30,39 @@ typedef struct {
   const char* start; // begining
   const char* current; // lexeme being looked at
   int line;
+  Map map;
 } Scanner;
 
 Scanner scanner;
+
+void buildIdent(){
+  addKey("var", (void*)TOKEN_VAR, &scanner.map);
+  addKey("this", (void*)TOKEN_THIS, &scanner.map);
+  addKey("and", (void*)TOKEN_AND, &scanner.map);
+  addKey("class", (void*)TOKEN_CLASS, &scanner.map);
+  addKey("else", (void*)TOKEN_ELSE, &scanner.map);
+  addKey("false", (void*)TOKEN_FALSE, &scanner.map);
+  addKey("for", (void*)TOKEN_FOR, &scanner.map);
+  addKey("fun", (void*)TOKEN_FUN, &scanner.map);
+  addKey("if", (void*)TOKEN_IF, &scanner.map);
+  addKey("nil", (void*)TOKEN_NIL, &scanner.map);
+  addKey("or", (void*)TOKEN_OR, &scanner.map);
+  addKey("print", (void*)TOKEN_PRINT, &scanner.map);
+  addKey("return", (void*)TOKEN_RETURN, &scanner.map);
+  addKey("super", (void*)TOKEN_SUPER, &scanner.map);
+  addKey("this", (void*)TOKEN_THIS, &scanner.map);
+  addKey("true", (void*)TOKEN_TRUE, &scanner.map);
+  addKey("var", (void*)TOKEN_VAR, &scanner.map);
+  addKey("while", (void*)TOKEN_WHILE, &scanner.map);
+}
 
 void initScanner(const char* source){
   scanner.start = source;
   scanner.current = source;
   scanner.line = 1;
+  scanner.map.capacity  = INITIAL_CAPACITY;
+  scanner.map.entries   = calloc(INITIAL_CAPACITY, sizeof(Entry*));
+  buildIdent();
 }
 
 Token scanToken(){
@@ -85,7 +111,20 @@ static Token identifier(){
 }
 
 TokenType identifierType(){
-  return TOKEN_IDENTIFIER;
+  size_t len = scanner.current - scanner.start;
+  char *ident = malloc(len + 1);
+  ident[len] = '\0';
+  memcpy(ident, scanner.start, len);
+  Entry* entry = getEntry(ident, &scanner.map);
+  TokenType result;
+  if(entry == NULL){
+    result = TOKEN_IDENTIFIER;
+  }
+  else{
+    result = (TokenType)(intptr_t)entry->value;
+  }
+  free(ident);
+  return result;
 }
 
 Token string(){
