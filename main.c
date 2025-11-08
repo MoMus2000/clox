@@ -1,35 +1,65 @@
 #include "common.h"
 #include "chunk.h"
 #include "debug.h"
+#include "stdio.h"
+#include "stdlib.h"
 #include "vm.h"
 
 
+static char* readFile(const char* path){
+  FILE* file = fopen(path, "rb");
+  fseek(file, 0, SEEK_END); // Move pointer to the end
+
+  size_t fileSize = ftell(file); // Not normal p arith since this OS
+  rewind(file); // Move back to the start
+  
+  char* buffer = malloc(fileSize+1);
+  size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
+  buffer[bytesRead] = '\0';
+
+  fclose(file);
+
+  return buffer;
+}
+
+static void repl(){
+  char line[1024];
+  for(;;){
+    printf("> ");
+    if(!fgets(line, sizeof(line), stdin)){
+      printf("\n");
+      break;
+    }
+    /*interpret(line);*/
+  }
+}
+
+static void runFile(const char* path){
+    char* source = readFile(path);
+    /*InterpretResult result = interpret(source);*/
+    /*free(source);*/
+    /**/
+    /*if(result == INTERPRET_COMPILE_ERROR) exit(65);*/
+    /*if(result == INTERPRET_RUNTIME_ERROR) exit(70);*/
+}
+
 int main(int argc, char** argv){
   initVM();
-  Chunk chunk;
-  initChunk(&chunk);
 
-  int constant = addConstant(&chunk, 1.2);
-  writeChunk(&chunk, OP_CONSTANT, 123);
-  writeChunk(&chunk, constant, 123);
+  if (argc == 1){
+    repl();
+  }
 
-  constant = addConstant(&chunk, 3.4);
-  writeChunk(&chunk, OP_CONSTANT, 123);
-  writeChunk(&chunk, constant, 123);
+  else if (argc == 2){
+    runFile(argv[1]);
+  }
 
-  writeChunk(&chunk, OP_ADD, 123);
+  else {
+    fprintf(stderr, "Usage clox: [path]\n");
+    exit(64);
+  }
 
-  constant = addConstant(&chunk, 5.6);
-  writeChunk(&chunk, OP_CONSTANT, 123);
-  writeChunk(&chunk, constant, 123);
-
-  writeChunk(&chunk, OP_DIVIDE, 123);
-  writeChunk(&chunk, OP_NEGATE, 123);
-
-  writeChunk(&chunk, OP_RETURN, 123);
-
-  /*disassembleChunk(&chunk, "test chunk");*/
-  interpret(&chunk);
   freeVM();
+
   return 0;
 }
