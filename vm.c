@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "debug.h"
-#include "compile.h"
+#include "compiler.h"
 #include "vm.h"
 
 VM vm; // We only need one VM so its easier to pass it around
