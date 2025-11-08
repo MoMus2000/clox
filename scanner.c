@@ -5,16 +5,25 @@
 #include "scanner.h"
 
 static bool isAtEnd();
-Token makeToken(TokenType);
-Token errorToken(const char*);
 static char advance();
 static bool match(char);
 static void skipWhitespace();
 static char peek();
 static char peekNext();
-Token string();
 static bool isDigit(char);
-Token number();
+static bool isAlpha(char);
+static Token identifier();
+TokenType identifierType();
+
+static bool isAlpha(char c){
+  return (
+      (c >= 'a' && c <= 'z')
+      ||
+      (c >= 'A' && c <= 'Z')
+      ||
+      (c == '_')
+  );
+}
 
 typedef struct {
   const char* start; // begining
@@ -37,6 +46,7 @@ Token scanToken(){
 
   char c = advance();
 
+  if(isAlpha(c)) return identifier();
   if(isDigit(c)) return number();
 
   switch(c) {
@@ -67,6 +77,15 @@ Token scanToken(){
   }
 
   return errorToken("Unexpected Character.");
+}
+
+static Token identifier(){
+  while(isAlpha(peek()) || isDigit(peek())) advance();
+  return makeToken(identifierType());
+}
+
+TokenType identifierType(){
+  return TOKEN_IDENTIFIER;
 }
 
 Token string(){
