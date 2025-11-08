@@ -11,6 +11,10 @@ static char advance();
 static bool match(char);
 static void skipWhitespace();
 static char peek();
+static char peekNext();
+Token string();
+static bool isDigit(char);
+Token number();
 
 typedef struct {
   const char* start; // begining
@@ -32,6 +36,8 @@ Token scanToken(){
   if(isAtEnd()) return makeToken(TOKEN_EOF);
 
   char c = advance();
+
+  if(isDigit(c)) return number();
 
   switch(c) {
     case '(' : return makeToken(TOKEN_LEFT_PAREN);
@@ -57,9 +63,37 @@ Token scanToken(){
     case '=' : return makeToken(
       match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL
     );
+    case '"': return string();
   }
 
   return errorToken("Unexpected Character.");
+}
+
+Token string(){
+  while(peek() != '"' && !isAtEnd()){
+    advance();
+  }
+
+  if(isAtEnd()) return errorToken("Unterminated String.");
+
+  advance();
+
+  return makeToken(TOKEN_STRING);
+}
+
+Token number(){
+  while(isDigit(peek())) advance();
+
+  if(peek() == '.' && isDigit(peekNext())){
+    advance();
+    while(isDigit(peek())) advance();
+  }
+
+  return makeToken(TOKEN_NUMBER);
+}
+
+static bool isDigit(char num){
+  return num >= '0' && num <= '9';
 }
 
 static bool isAtEnd() {
