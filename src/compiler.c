@@ -10,7 +10,7 @@ void static errorAtCurrent(const char*);
 void consume(TokenType, const char*);
 void error(Token, const char*);
 void errorAt(Token*, const char*);
-void expression();
+static void expression();
 void emitByte(uint8_t byte);
 void endCompiler();
 void emitReturn();
@@ -64,7 +64,7 @@ void consume(TokenType type, const char* message){
   errorAtCurrent(message);
 }
 
-void expression(){
+static void expression(){
 }
 
 void errorAt(Token* token, const char* message){
