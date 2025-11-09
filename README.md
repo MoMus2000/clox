@@ -107,11 +107,92 @@ than unary.
 
 ### Whats happening ??
 
-- *expression(PARSE_ASSIGNMENT)* kicks off the parser.
+- *expression(PREC_ASSIGNMENT)* kicks off the parser.
 - Depending on what sort of token gets encountered relevant func from the table gets triggered.
 - getRule() is being used to get the precedence.
 - parsePrecedence() is doing the heavy lifting and determining what to parse.
 - If the token starts an expression (like a number, (, or -), its prefix function runs.
 - If it follows an expression (like +, \*, or ==), its infix function runs.
 
+### Example - Parse 1 + 2 * 3
+
+Step by Step
+
+```python3
+parsePrecedence(precedence):
+    advance()
+    prefixRule = getRule(previous.type).prefix
+    prefixRule()
+
+    while precedence <= getRule(current.type).precedence:
+        advance()
+        infixRule = getRule(previous.type).infix
+        infixRule()
+```
+
+`Token Steam`
+
+```bash
+[NUMBER(1)] [+] [NUMBER(2)] [*] [NUMBER(3)] [EOF]
+```
+
+`Steps`
+
+You first enter via expression(*PREC_ASSIGNMENT*).
+
+You advance the token such that 1 is parser.previous.
+
+Since 1 is a number you getback number as the prefixRule().
+
+You emit bytecode for 1.
+
+Now the precidence given was *PREC_ASSIGNMENT*.
+
+So *PREC_ASSIGNMENT* is less than *PREC_TERM* (+).
+
+Hence the while loops holds true.
+
+You advance such that + is the previous and the current is
+now 2.
+
+The infix rule is now binary based on the PLUS token.
+
+`The implementation of binary is as follows`
+```c
+static void binary() {
+  TokenType operatorType = parser.previous.type;
+  ParseRule* rule = getRule(operatorType);
+  parsePrecedence((Precedence)(rule->precedence + 1));
+
+  switch (operatorType) {
+    case TOKEN_PLUS:          emitByte(OP_ADD); break;
+    case TOKEN_MINUS:         emitByte(OP_SUBTRACT); break;
+    case TOKEN_STAR:          emitByte(OP_MULTIPLY); break;
+    case TOKEN_SLASH:         emitByte(OP_DIVIDE); break;
+    default: return; // Unreachable.
+  }
+}
+```
+
+You get the operator which is +.
+
+You get the rule based on + which is binary.
+
+You parse again but with precidence (+ 1) of '+'.
+
+Why ? You are saying parse everything higher than '+'.
+You’re telling the parser: “Keep reading anything that should happen before +, but stop if you see another +.”
+That makes sure the + operators are handled one after another from left to right, just like in normal math.
+
+That way you handle the right hand side, emit the byte code
+
+Then end up at the operatorType for that to be processed.
+
+You return back to the orignal parsePrecidence encounter an EOF,
+which has less precidence than ASSIGNMENT and exit out.
+
+Resulting bytecode is as follows
+
+`1 2 3 * +`
+`OP_CONSTANT index OP_CONSTANT index OP_CONSTANT index OP_MULTIPLY OP_ADD`
 
