@@ -15,7 +15,7 @@ make
 make run
 ```
 
-### Pratt Parsing
+## Pratt Parsing
 
 Different types of expressions:
 
@@ -24,7 +24,7 @@ Different types of expressions:
 - Unary Negation: -123
 - Arithmetic Operations: + - / *
 
-#### Parsing Number Literals
+### Parsing Number Literals
 
 In short we **map** each **TokenType** for an expression.
 
