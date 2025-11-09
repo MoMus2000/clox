@@ -5,28 +5,6 @@
 #include "scanner.h"
 #include "compiler.h"
 
-void static advance();
-void static errorAtCurrent(const char*);
-void consume(TokenType, const char*);
-void error(Token, const char*);
-void errorAt(Token*, const char*);
-static void expression();
-void emitByte(uint8_t byte);
-void endCompiler();
-void emitReturn();
-void emitConstant(Value value);
-
-typedef struct {
-  Token previous;
-  Token current;
-  bool  hadError;
-  bool  panicMode;
-} Parser;
-
-static Chunk* compilingChunk;
-
-Parser parser;
-
 typedef enum {
   PREC_NONE,
   PREC_ASSIGNMENT, // =
@@ -39,9 +17,58 @@ typedef enum {
   PREC_UNARY, // ! -
   PREC_CALL, // ()
   PREC_PRIMARY,
-} Precidence;
+} Precedence;
 
-static void parsePrecidence(Precidence);
+void static advance();
+void static errorAtCurrent(const char*);
+void consume(TokenType, const char*);
+static void error(const char*);
+void errorAt(Token*, const char*);
+static void expression();
+void emitByte(uint8_t byte);
+void endCompiler();
+void emitReturn();
+void emitConstant(Value value);
+static void binary();
+static void unary();
+static void number();
+static void grouping();
+typedef void (*ParseFn)();
+typedef struct{
+  ParseFn prefix;
+  ParseFn infix;
+  Precedence precedence;
+}ParseRule;
+static ParseRule* getRule(TokenType t);
+
+
+typedef struct {
+  Token previous;
+  Token current;
+  bool  hadError;
+  bool  panicMode;
+} Parser;
+
+static Chunk* compilingChunk;
+
+Parser parser;
+
+
+static void parsePrecedence(Precedence);
+
+
+ParseRule rules[] = {
+  [TOKEN_LEFT_PAREN] = {grouping, NULL, PREC_NONE},
+  [TOKEN_MINUS] = {unary, binary, PREC_TERM},
+  [TOKEN_PLUS] = {NULL, binary, PREC_TERM},
+  [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
+  [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
+  [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
+};
+
+static ParseRule* getRule(TokenType t){
+  return &rules[t];
+}
 
 
 Chunk* currentChunk(){
@@ -83,7 +110,7 @@ void consume(TokenType type, const char* message){
 }
 
 static void expression(){
-  parsePrecidence(PREC_ASSIGNMENT);
+  parsePrecedence(PREC_ASSIGNMENT);
 }
 
 void errorAt(Token* token, const char* message){
@@ -136,7 +163,7 @@ void emitConstant(Value value){
 static void unary(){
   TokenType operatorType = parser.previous.type;
 
-  parsePrecidence(PREC_UNARY);
+  parsePrecedence(PREC_UNARY); // parse unary or anything greater
 
   switch(operatorType){
     case TOKEN_MINUS: emitByte(OP_NEGATE); break;
@@ -150,7 +177,46 @@ static void grouping(){
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
 }
 
-static void parsePrecidence(){
+static void binary(){
+  TokenType operator = parser.previous.type;
+  ParseRule* rule = getRule(operator);
+  parsePrecedence((Precedence)(rule->precedence+1)); // beyond the current prec
+
+  switch(operator){
+    case TOKEN_PLUS: {
+        emitByte(OP_ADD); break;
+     }
+    case TOKEN_MINUS: {
+        emitByte(OP_SUBTRACT); break;
+     }
+    case TOKEN_STAR: {
+        emitByte(OP_MULTIPLY); break;
+     }
+    case TOKEN_SLASH: {
+        emitByte(OP_DIVIDE); break;
+     }
+    default: return;
+  }
+}
+
+static void error(const char* message) {
+  errorAt(&parser.previous, message);
+}
+
+static void parsePrecedence(Precedence precedence){
+  advance();
+  ParseFn prefixFn = getRule(parser.previous.type)->prefix;
+  if(prefixFn == NULL){
+    error("Expected an Expression");
+    return;
+  }
+  prefixFn();
+
+  while(precedence <= getRule(parser.current.type)->precedence) {
+    advance();
+    ParseFn infixFn = getRule(parser.previous.type)->infix;
+    infixFn();
+  }
 
 }
 
