@@ -37,6 +37,32 @@ The **index of the array** is the **TokenType**.
 The **function at each index** is the code to **compile an expression**
 of that type.
 
+### Example Functions to compile expressions
+
+
+`Unary`
+```c
+static void unary(){
+  TokenType operatorType = parser.previous.type;
+
+  expression();
+
+  switch(operatorType){
+    case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+    default: return;
+  }
+}
+```
+
+`Grouping`
+```c
+static void grouping(){
+  // ( is already parsed
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
+}
+```
+
 ### Precendence
 
 ```c
@@ -59,7 +85,6 @@ To define precidence you make a enum as such, the order of
 precidence is defined as increasing downwards. **PREC_NONE**
 having the lowest precidence while **PREC_CALL** having the
 highest precidence.
-
 
 #### Why do we need precidence ?
 
