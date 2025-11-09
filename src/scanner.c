@@ -14,6 +14,7 @@ static char peekNext();
 static bool isDigit(char);
 static bool isAlpha(char);
 static Token identifier();
+static Token number();
 TokenType identifierType();
 
 static bool isAlpha(char c){
@@ -139,7 +140,7 @@ Token string(){
   return makeToken(TOKEN_STRING);
 }
 
-Token number(){
+static Token number(){
   while(isDigit(peek())) advance();
 
   if(peek() == '.' && isDigit(peekNext())){

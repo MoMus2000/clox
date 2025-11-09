@@ -37,6 +37,5 @@ Token scanToken();
 Token makeToken(TokenType);
 Token errorToken(const char*);
 Token string();
-Token number();
 
 #endif

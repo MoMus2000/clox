@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "chunk.h"
-#include "compiler.h"
 #include "scanner.h"
+#include "compiler.h"
 
 void static advance();
 void static errorAtCurrent(const char*);
@@ -14,6 +14,7 @@ static void expression();
 void emitByte(uint8_t byte);
 void endCompiler();
 void emitReturn();
+void emitConstant(Value value);
 
 typedef struct {
   Token previous;
@@ -25,6 +26,21 @@ typedef struct {
 static Chunk* compilingChunk;
 
 Parser parser;
+
+typedef enum {
+  PREC_NONE,
+  PREC_ASSIGNMENT, // =
+  PREC_OR, // or
+  PREC_AND, // and
+  PREC_EQUALITY, // ==
+  PREC_COMPARISION, // < > <= >=
+  PREC_TERM, // + -
+  PREC_FACTOR, // * /
+  PREC_UNARY, // ! -
+  PREC_CALL, // ()
+  PREC_PRIMARY,
+} Precidence;
+
 
 Chunk* currentChunk(){
   return compilingChunk;
@@ -99,5 +115,39 @@ void endCompiler(){
 
 void emitReturn(){
   writeChunk(currentChunk(), OP_RETURN, parser.previous.line);
+}
+
+static void number(){
+  double value = strtod(parser.previous.start, NULL);
+  emitConstant(value);
+}
+
+void emitConstant(Value value){
+  int index = addConstant(
+      currentChunk(),
+      value
+  );
+  emitBytes(OP_CONSTANT, (uint8_t)index);
+}
+
+static void unary(){
+  TokenType operatorType = parser.previous.type;
+
+  expression();
+
+  switch(operatorType){
+    case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+    default: return;
+  }
+}
+
+static void grouping(){
+  // ( is already parsed
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
+}
+
+static void parsePrecidence(){
+
 }
 
