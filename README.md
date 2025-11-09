@@ -105,4 +105,13 @@ than unary.
 
 ![Mapping](./img/connections.png)
 
+### Whats happening ??
+
+- *expression(PARSE_ASSIGNMENT)* kicks off the parser.
+- Depending on what sort of token gets encountered relevant func from the table gets triggered.
+- getRule() is being used to get the precedence.
+- parsePrecedence() is doing the heavy lifting and determining what to parse.
+- If the token starts an expression (like a number, (, or -), its prefix function runs.
+- If it follows an expression (like +, \*, or ==), its infix function runs.
+
 
