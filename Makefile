@@ -2,7 +2,7 @@
 
 all:
 	mkdir -p build
-	gcc -o build/clox *.c
+	gcc -o build/clox src/*.c -I ./src/include/
 
 run:
 	./build/clox $(args)
