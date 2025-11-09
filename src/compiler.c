@@ -41,6 +41,8 @@ typedef enum {
   PREC_PRIMARY,
 } Precidence;
 
+static void parsePrecidence(Precidence);
+
 
 Chunk* currentChunk(){
   return compilingChunk;
@@ -81,6 +83,7 @@ void consume(TokenType type, const char* message){
 }
 
 static void expression(){
+  parsePrecidence(PREC_ASSIGNMENT);
 }
 
 void errorAt(Token* token, const char* message){
@@ -133,7 +136,7 @@ void emitConstant(Value value){
 static void unary(){
   TokenType operatorType = parser.previous.type;
 
-  expression();
+  parsePrecidence(PREC_UNARY);
 
   switch(operatorType){
     case TOKEN_MINUS: emitByte(OP_NEGATE); break;

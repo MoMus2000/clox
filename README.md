@@ -45,7 +45,7 @@ of that type.
 static void unary(){
   TokenType operatorType = parser.previous.type;
 
-  expression();
+  parsePrecidence(PREC_UNARY);
 
   switch(operatorType){
     case TOKEN_MINUS: emitByte(OP_NEGATE); break;
@@ -100,4 +100,9 @@ expression would be parsed since **PREC_ASSIGN** is less than
 **PREC_UNARY**. However if **parsePresidence(PREC_UNARY)** were
 defined then we would stop at `-a.b` since `+` has less precidence
 than unary.
+
+### Connection
+
+![Mapping](./img/connections.png)
+
 
