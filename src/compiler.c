@@ -4,6 +4,7 @@
 #include "chunk.h"
 #include "scanner.h"
 #include "compiler.h"
+#include "debug.h"
 
 typedef enum {
   PREC_NONE,
@@ -141,6 +142,11 @@ void emitBytes(uint8_t byte1, uint8_t byte2){
 
 void endCompiler(){
   emitReturn();
+#ifdef DEBUG_PRINT_CODE
+  if(!parser.hadError){
+     disassembleChunk(currentChunk(), "code");
+  }
+#endif
 }
 
 void emitReturn(){
