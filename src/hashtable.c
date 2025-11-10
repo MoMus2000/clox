@@ -11,8 +11,6 @@ unsigned int simpleHash(const char* str) {
 void growCapacity(Map* map) {
   int newCapacity = map->capacity * 2;
 
-  printf("Growing Capacity To: %d\n", newCapacity);
-
   Entry** entries = calloc(newCapacity, sizeof(Entry*));
 
   for(int i=0; i<map->capacity; i++){

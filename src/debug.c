@@ -2,7 +2,12 @@
 #include "debug.h"
 
 void printValue(Value value){
-  printf("%g", value);
+  ValueType type = value.type;
+  switch(type){
+      case VAL_BOOL: printf(AS_BOOL(value)? "true": "false"); break;
+      case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
+      case VAL_NIL: printf("nil"); break;
+  }
 }
 
 static int simpleInstruction(const char* name, int offset){
@@ -50,6 +55,12 @@ int disassembleInstruction(Chunk* chunk, int offset){
       return simpleInstruction("OP_MULTIPLY", offset);
     case OP_DIVIDE:
       return simpleInstruction("OP_DIVIDE", offset);
+    case OP_FALSE:
+      return simpleInstruction("OP_FALSE", offset);
+    case OP_TRUE:
+      return simpleInstruction("OP_TRUE", offset);
+    case OP_NIL:
+      return simpleInstruction("OP_NIL", offset);
     case OP_CONSTANT:
       return constantInstruction("OP_CONSTANT", chunk, offset);
     default:

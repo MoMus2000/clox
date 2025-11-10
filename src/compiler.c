@@ -4,7 +4,10 @@
 #include "chunk.h"
 #include "scanner.h"
 #include "compiler.h"
+
+#ifdef DEBUG_PRINT_CODE
 #include "debug.h"
+#endif
 
 typedef enum {
   PREC_NONE,
@@ -33,6 +36,7 @@ void emitConstant(Value value);
 static void binary();
 static void unary();
 static void number();
+static void literal();
 static void grouping();
 typedef void (*ParseFn)();
 typedef struct{
@@ -65,12 +69,16 @@ ParseRule rules[] = {
   [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
   [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
   [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
+  [TOKEN_TRUE] = {literal, NULL, PREC_NONE},
+  [TOKEN_FALSE] = {literal, NULL, PREC_NONE},
+  [TOKEN_NIL] = {literal, NULL, PREC_NONE},
+  [TOKEN_BANG] = {unary, NULL, PREC_NONE},
+  [TOKEN_EOF] = {NULL, NULL, PREC_NONE}
 };
 
 static ParseRule* getRule(TokenType t){
   return &rules[t];
 }
-
 
 Chunk* currentChunk(){
   return compilingChunk;
@@ -153,9 +161,19 @@ void emitReturn(){
   writeChunk(currentChunk(), OP_RETURN, parser.previous.line);
 }
 
+static void literal() {
+  TokenType type = parser.previous.type;
+  switch(type){
+    case TOKEN_FALSE: emitByte(OP_FALSE); break;
+    case TOKEN_TRUE: emitByte(OP_TRUE); break;
+    case TOKEN_NIL: emitByte(OP_NIL); break;
+    default: { return; }
+  }
+}
+
 static void number(){
   double value = strtod(parser.previous.start, NULL);
-  emitConstant(value);
+  emitConstant(NUMBER_VAL(value));
 }
 
 void emitConstant(Value value){
@@ -173,6 +191,7 @@ static void unary(){
 
   switch(operatorType){
     case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+    case TOKEN_BANG: emitByte(OP_NEGATE); break;
     default: return;
   }
 }
@@ -216,6 +235,7 @@ static void parsePrecedence(Precedence precedence){
     error("Expected an Expression");
     return;
   }
+
   prefixFn();
 
   while(precedence <= getRule(parser.current.type)->precedence) {

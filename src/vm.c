@@ -6,10 +6,19 @@
 VM vm; // We only need one VM so its easier to pass it around
 
 static InterpretResult run();
+static void runTimeError(const char*);
 
 void push(Value value){
   *vm.stackTop = value;
   vm.stackTop++; // move the stack pointer
+}
+
+static void runTimeError(const char* message){
+  fprintf(stderr, "%s", message);
+}
+
+Value peek(int distance){
+  return vm.stackTop[-1 - distance];
 }
 
 Value pop(){
@@ -53,11 +62,15 @@ static InterpretResult run(){
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 
-#define BINARY_OP(op) \
+#define BINARY_OP(valueType, op) \
   do { \
-    Value b = pop(); \
-    Value a = pop(); \
-    push(a op b); \
+    if(!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
+        runTimeError("Operands must be numbers"); \
+        return INTERPRET_RUNTIME_ERROR; \
+    } \
+    double b = AS_NUMBER(pop()); \
+    double a = AS_NUMBER(pop()); \
+    push(valueType(a op b)); \
   } while(false)
 
   for(;;){
@@ -82,18 +95,30 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
         return INTERPRET_OK;
       }
       case OP_NEGATE: {
-        push(pop()*-1);
+        if(IS_NUMBER(peek(0))){
+          push(NUMBER_VAL(AS_NUMBER(pop())*-1));
+        } 
+        else if(IS_BOOL(peek(0))){
+          push(BOOL_VAL(!AS_BOOL(pop())));
+        }
+        else {
+          runTimeError("Unable to negate");
+          return INTERPRET_RUNTIME_ERROR;
+        }
         break;
       }
-      case OP_ADD: BINARY_OP(+); break;
-      case OP_SUBTRACT: BINARY_OP(-); break;
-      case OP_MULTIPLY: BINARY_OP(*); break;
-      case OP_DIVIDE: BINARY_OP(/); break;
+      case OP_ADD: BINARY_OP(NUMBER_VAL, +); break;
+      case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
+      case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
+      case OP_DIVIDE: BINARY_OP(NUMBER_VAL, /); break;
       case OP_CONSTANT: {
         Value constant = READ_CONSTANT();
         push(constant);
         break;
       }
+      case OP_FALSE: push(BOOL_VAL(false)); break;
+      case OP_TRUE: push(BOOL_VAL(true)); break;
+      case OP_NIL: push(NIL_VAL); break;
     }
   }
 #undef READ_BYTE
