@@ -7,6 +7,8 @@ VM vm; // We only need one VM so its easier to pass it around
 
 static InterpretResult run();
 static void runTimeError(const char*);
+bool isFalsey(Value value);
+bool valuesEqual(Value a, Value b);
 
 void push(Value value){
   *vm.stackTop = value;
@@ -98,9 +100,6 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
         if(IS_NUMBER(peek(0))){
           push(NUMBER_VAL(AS_NUMBER(pop())*-1));
         } 
-        else if(IS_BOOL(peek(0))){
-          push(BOOL_VAL(!AS_BOOL(pop())));
-        }
         else {
           runTimeError("Unable to negate");
           return INTERPRET_RUNTIME_ERROR;
@@ -119,10 +118,37 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
       case OP_FALSE: push(BOOL_VAL(false)); break;
       case OP_TRUE: push(BOOL_VAL(true)); break;
       case OP_NIL: push(NIL_VAL); break;
+      case OP_NOT: {
+        Value value = pop();
+        push(BOOL_VAL(isFalsey(value)));
+        break;
+       }
+      case OP_EQUAL: {
+        Value a = pop();
+        Value b = pop();
+        push(BOOL_VAL(valuesEqual(a, b)));
+        break;
+       }
+      case OP_LESS: BINARY_OP(BOOL_VAL, <); break;
+      case OP_GREATER: BINARY_OP(BOOL_VAL, >); break;
     }
   }
 #undef READ_BYTE
 #undef READ_CONSTANT
 #undef BINARY_OP
+}
+
+bool isFalsey(Value value){
+  return IS_BOOL(value) && !AS_BOOL(value) || IS_NIL(value);
+}
+
+bool valuesEqual(Value a, Value b){
+  if(a.type != b.type) return false;
+  switch(a.type){
+    case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
+    case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+    case VAL_NIL: return true;
+    default: return false;
+  }
 }
 
