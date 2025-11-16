@@ -128,7 +128,7 @@ TokenType identifierType(){
   return result;
 }
 
-Token string(){
+static Token string(){
   while(peek() != '"' && !isAtEnd()){
     advance();
   }

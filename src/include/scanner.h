@@ -36,6 +36,6 @@ void initScanner(const char* source);
 Token scanToken();
 Token makeToken(TokenType);
 Token errorToken(const char*);
-Token string();
+static Token string();
 
 #endif

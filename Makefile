@@ -10,3 +10,7 @@ run:
 clean:
 	rm -f ./build/*
 
+prod:
+	mkdir -p build
+	gcc -O3 -o build/clox src/*.c -I ./src/include/
+

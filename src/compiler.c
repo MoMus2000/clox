@@ -37,6 +37,7 @@ static void binary();
 static void unary();
 static void number();
 static void literal();
+static void handle_string();
 static void grouping();
 typedef void (*ParseFn)();
 typedef struct{
@@ -79,6 +80,7 @@ ParseRule rules[] = {
   [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISION},
   [TOKEN_LESS] = {NULL, binary, PREC_COMPARISION},
   [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISION},
+  [TOKEN_STRING] = {handle_string, NULL, PREC_COMPARISION},
   [TOKEN_EOF] = {NULL, NULL, PREC_NONE}
 };
 
@@ -112,7 +114,18 @@ void static advance(){
   }
 }
 
+static void handle_string(){
+  emitConstant(
+      OBJ_VAL(
+        // trim start and end quotation marks
+        copyString(parser.previous.start + 1, parser.previous.length -2)
+      )
+  );
+  printf("Handling String\n");
+}
+
 void static errorAtCurrent(const char* message){
+
   errorAt(&parser.current, message);
 }
 
