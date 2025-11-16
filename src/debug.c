@@ -1,18 +1,23 @@
 #include <stdio.h>
 #include "debug.h"
 
+void printObject(Value value){
+  switch(OBJ_TYPE(value)){
+    case OBJ_STRING: {
+        printf("%s", AS_CSTRING(value));
+        break;
+     }
+  }
+}
+
 void printValue(Value value){
   ValueType type = value.type;
   switch(type){
       case VAL_BOOL: printf(AS_BOOL(value)? "true": "false"); break;
       case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
       case VAL_NIL: printf("nil"); break;
-      case VAL_OBJ: printf("TBD - handle printing OBJ"); break;
+      case VAL_OBJ: printObject(value); break;
   }
-}
-
-void printString(Value value){
-
 }
 
 static int simpleInstruction(const char* name, int offset){

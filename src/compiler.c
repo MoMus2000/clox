@@ -115,6 +115,8 @@ void static advance(){
 }
 
 static void handle_string(){
+  copyString(parser.previous.start + 1, parser.previous.length -2);
+  printf("Hello2\n");
   emitConstant(
       OBJ_VAL(
         // trim start and end quotation marks
