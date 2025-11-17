@@ -80,7 +80,7 @@ ParseRule rules[] = {
   [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISION},
   [TOKEN_LESS] = {NULL, binary, PREC_COMPARISION},
   [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISION},
-  [TOKEN_STRING] = {handle_string, NULL, PREC_COMPARISION},
+  [TOKEN_STRING] = {handle_string, binary, PREC_COMPARISION},
   [TOKEN_EOF] = {NULL, NULL, PREC_NONE}
 };
 
