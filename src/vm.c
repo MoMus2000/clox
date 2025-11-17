@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "debug.h"
 #include "compiler.h"
+#include "memory.h"
 #include "vm.h"
 
 VM vm; // We only need one VM so its easier to pass it around
@@ -107,7 +108,20 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
         }
         break;
       }
-      case OP_ADD: BINARY_OP(NUMBER_VAL, +); break;
+      case OP_ADD:{
+          if(IS_STRING(peek(0)) && IS_STRING(peek(1))){
+            concatenate();
+          } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))){
+            BINARY_OP(NUMBER_VAL, +);
+          }
+          else {
+            runTimeError(
+              "Operands must be two numbers or strings\n"
+            );
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          break;
+      }
       case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
       case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
       case OP_DIVIDE: BINARY_OP(NUMBER_VAL, /); break;
@@ -137,6 +151,23 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #undef READ_BYTE
 #undef READ_CONSTANT
 #undef BINARY_OP
+}
+
+void concatenate(){
+  ObjString* aString = AS_STRING(pop());
+  ObjString* bString = AS_STRING(pop());
+
+  int length = aString->length + bString->length;
+
+  char* chars = ALLOCATE(char, length+1);
+  memcpy(chars, aString, aString->length);
+  memcpy(chars + aString->length, bString, bString->length);
+
+  chars[length] = '\0';
+
+  ObjString* result = takeString(chars, length);
+
+  push(OBJ_VAL(result));
 }
 
 bool isFalsey(Value value){

@@ -28,4 +28,6 @@ void freeVM();
 
 InterpretResult interpret(const char* source);
 
+void concatenate();
+
 #endif
