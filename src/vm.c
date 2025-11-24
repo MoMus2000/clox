@@ -105,6 +105,10 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
         printf("\n");
         break;
       }
+      case OP_POP: {
+        pop();
+        break;
+      }
       case OP_NEGATE: {
         if(IS_NUMBER(peek(0))){
           push(NUMBER_VAL(AS_NUMBER(pop())*-1));
@@ -161,14 +165,15 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 }
 
 void concatenate(){
-  ObjString* aString = AS_STRING(pop());
   ObjString* bString = AS_STRING(pop());
+  ObjString* aString = AS_STRING(pop());
 
   int length = aString->length + bString->length;
 
+
   char* chars = ALLOCATE(char, length+1);
-  memcpy(chars, aString, aString->length);
-  memcpy(chars + aString->length, bString, bString->length);
+  memcpy(chars, aString->chars, aString->length);
+  memcpy(chars + aString->length, bString->chars, bString->length);
 
   chars[length] = '\0';
 
