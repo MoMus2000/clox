@@ -39,6 +39,7 @@ static void number();
 static void literal();
 static void handle_string();
 static void grouping();
+static void variable();
 typedef void (*ParseFn)();
 typedef struct{
   ParseFn prefix;
@@ -85,6 +86,7 @@ ParseRule rules[] = {
   [TOKEN_LESS] = {NULL, binary, PREC_COMPARISION},
   [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISION},
   [TOKEN_STRING] = {handle_string, binary, PREC_COMPARISION},
+  [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
   [TOKEN_EOF] = {NULL, NULL, PREC_NONE}
 };
 
@@ -105,6 +107,7 @@ static bool match(TokenType type){
   advance();
   return true;
 }
+
 
 static void printStatement(){
   expression();
@@ -157,6 +160,15 @@ static uint32_t identifierConstant(Token* name){
         )
       )
   );
+}
+
+static void namedVariable(Token name){
+  uint8_t arg = identifierConstant(&name);
+  emitBytes(OP_GET_GLOBAL, arg);
+}
+
+static void variable(){
+  namedVariable(parser.previous);
 }
 
 static uint32_t parseVariable(const char* message) {

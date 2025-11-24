@@ -118,6 +118,16 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
         pop();
         break;
       }
+      case OP_GET_GLOBAL: {
+        ObjString* name = READ_STRING();
+        Value value;
+        if (!tableGet(&vm.globals, name, &value)) {
+          runTimeError("Undefined variable");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        push(value);
+        break;
+      }
       case OP_NEGATE: {
         if(IS_NUMBER(peek(0))){
           push(NUMBER_VAL(AS_NUMBER(pop())*-1));

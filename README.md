@@ -274,3 +274,15 @@ Globals table after OP_DEFINE_GLOBAL:
 { "a" : 5 }
 ```
 
+### Example: print a;
+    
+Simply fetch the corresponding value from the map,
+when the compiler emits `OP_GET_GLOBAL` and index.
+
+Use the index to read the var name from the constant pool,
+once you have the name, use the map to retrieve the value.
+
+If the value does not exist throw a runtime error,
+otherwise, push the value onto the stack.
+
+
