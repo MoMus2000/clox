@@ -241,6 +241,8 @@ Resulting bytecode is as follows
 
 ## Global Variables
 
+### Example: var a = 5;
+
 `OP_CONSTANT` pushes a value from the constant pool onto the stack.
 `OP_DEFINE_GLOBAL` reads a variable name (string) from the constant pool and stores the top stack value in the global table under that name, then pops the value off the stack.
 
