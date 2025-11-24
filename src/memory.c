@@ -17,11 +17,11 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize){
   return result;
 }
 
-void freeObjects(){
+void freeObjects() {
   Obj* object = vm.objects;
-  while(object != NULL){
+  while (object != NULL) {
     Obj* next = object->next;
-    freeObject(next);
-    object = next;
+    freeObject(object);   // free current object
+    object = next;        // move to next
   }
 }
