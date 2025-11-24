@@ -239,3 +239,36 @@ Resulting bytecode is as follows
 `1 2 3 * +`
 `OP_CONSTANT index OP_CONSTANT index OP_CONSTANT index OP_MULTIPLY OP_ADD`
 
+## Global Variables
+
+`OP_CONSTANT` pushes a value from the constant pool onto the stack.
+`OP_DEFINE_GLOBAL` reads a variable name (string) from the constant pool and stores the top stack value in the global table under that name, then pops the value off the stack.
+
+```
+Bytecode:  
+OP_CONSTANT (index for 5)  
+OP_DEFINE_GLOBAL (index for "a")
+
+Execution:
+
+Stack before OP_CONSTANT:  
+[ ]  (empty)
+
+After OP_CONSTANT:  
+[ 5 ]  ← value 5 pushed onto stack
+
+Globals table before OP_DEFINE_GLOBAL:  
+{ }
+
+During OP_DEFINE_GLOBAL:  
+- Reads "a" from constant pool  
+- Sets globals["a"] = 5 (top of stack)  
+- Pops 5 from stack
+
+Stack after OP_DEFINE_GLOBAL:  
+[ ]  (empty)
+
+Globals table after OP_DEFINE_GLOBAL:  
+{ "a" : 5 }
+```
+

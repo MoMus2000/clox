@@ -47,6 +47,10 @@ typedef struct{
 }ParseRule;
 static ParseRule* getRule(TokenType t);
 
+void emitBytes(uint8_t byte1, uint8_t byte2){
+  emitByte(byte1);
+  emitByte(byte2);
+}
 
 typedef struct {
   Token previous;
@@ -144,8 +148,43 @@ static void synchronize() {
   }
 }
 
+static uint32_t identifierConstant(Token* name){
+  return addConstant(
+      currentChunk(), 
+      OBJ_VAL(
+        copyString(
+          name->start, name->length  
+        )
+      )
+  );
+}
+
+static uint32_t parseVariable(const char* message) {
+  consume(TOKEN_IDENTIFIER, message); 
+  return identifierConstant(&parser.previous);
+}
+
+static void defineVariable(uint32_t global){
+  emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+static void varDeclaration() {
+  uint32_t global = parseVariable("Expect Variable Name.");
+  if(match(TOKEN_EQUAL)) {
+    expression();
+  } else {
+    emitByte(OP_NIL);
+  }
+  consume(TOKEN_SEMICOLON, "Expect ; after var decl.");
+  defineVariable(global);
+}
+
 static void declaration() {
-  statement();
+  if(match(TOKEN_VAR)){
+    varDeclaration();
+  } else {
+    statement();
+  }
 
   if(parser.panicMode){
     synchronize();
@@ -223,10 +262,6 @@ void emitByte(uint8_t byte){
   writeChunk(currentChunk(), byte, parser.previous.line);
 }
 
-void emitBytes(uint8_t byte1, uint8_t byte2){
-  emitByte(byte1);
-  emitByte(byte2);
-}
 
 void endCompiler(){
   emitReturn();

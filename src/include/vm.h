@@ -15,6 +15,7 @@ typedef struct {
   Value* stackTop; // points to where the next item will go
   Obj* objects;
   Table strings;
+  Table globals;
 }VM;
 
 typedef enum {
