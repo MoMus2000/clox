@@ -11,16 +11,16 @@
 typedef struct {
   char* key;
   void* value;
-} Entry;
+} HashEntry;
 
 typedef struct {
-  Entry** entries;
+  HashEntry** entries;
   int count;
   int capacity;
-} Map;
+} HashMap;
 
 unsigned int simpleHash(const char* str);
-void growCapacity(Map* map);
-void addKey(char* key, void* value, Map* map);
-Entry* getEntry(char* key, Map* map);
+void growCapacity(HashMap* map);
+void addKey(char* key, void* value, HashMap* map);
+HashEntry* getEntry(char* key, HashMap* map);
 #endif

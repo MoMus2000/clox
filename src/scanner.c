@@ -31,7 +31,7 @@ typedef struct {
   const char* start; // begining
   const char* current; // lexeme being looked at
   int line;
-  Map map;
+  HashMap map;
 } Scanner;
 
 Scanner scanner;
@@ -62,7 +62,7 @@ void initScanner(const char* source){
   scanner.current = source;
   scanner.line = 1;
   scanner.map.capacity  = INITIAL_CAPACITY;
-  scanner.map.entries   = calloc(INITIAL_CAPACITY, sizeof(Entry*));
+  scanner.map.entries   = calloc(INITIAL_CAPACITY, sizeof(HashEntry*));
   buildIdent();
 }
 
@@ -116,7 +116,7 @@ TokenType identifierType(){
   char *ident = malloc(len + 1);
   ident[len] = '\0';
   memcpy(ident, scanner.start, len);
-  Entry* entry = getEntry(ident, &scanner.map);
+  HashEntry* entry = getEntry(ident, &scanner.map);
   TokenType result;
   if(entry == NULL){
     result = TOKEN_IDENTIFIER;

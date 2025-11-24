@@ -8,13 +8,13 @@ unsigned int simpleHash(const char* str) {
     return hash;
 }
 
-void growCapacity(Map* map) {
+void growCapacity(HashMap* map) {
   int newCapacity = map->capacity * 2;
 
-  Entry** entries = calloc(newCapacity, sizeof(Entry*));
+  HashEntry** entries = calloc(newCapacity, sizeof(HashEntry*));
 
   for(int i=0; i<map->capacity; i++){
-    Entry* entry = map->entries[i];
+    HashEntry* entry = map->entries[i];
     if(entry != NULL){
       int newHash = simpleHash(entry->key) % newCapacity;
       while(entries[newHash] != NULL){
@@ -29,12 +29,12 @@ void growCapacity(Map* map) {
   map->capacity = newCapacity;
 }
 
-void addKey(char* key, void* value, Map* map){
+void addKey(char* key, void* value, HashMap* map){
   if(((float)map->count / map->capacity) > 0.30f){
     growCapacity(map);
   }
 
-  Entry* entry = malloc(sizeof(Entry));
+  HashEntry* entry = malloc(sizeof(HashEntry));
 
   int hash = simpleHash(key) % map->capacity;
 
@@ -57,7 +57,7 @@ void addKey(char* key, void* value, Map* map){
 }
 
 
-Entry* getEntry(char* key, Map* map) {
+HashEntry* getEntry(char* key, HashMap* map) {
   int capacity = map->capacity;
   int hash = simpleHash(key) % capacity;
   int start = hash;

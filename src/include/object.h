@@ -48,6 +48,7 @@ struct ObjString {
   Obj obj;
   int length;
   char* chars;
+  uint32_t hash;
 };
 
 #define IS_STRING(value) (isObjType(value, OBJ_STRING))
