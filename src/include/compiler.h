@@ -7,4 +7,7 @@
 
 bool compile(const char* source, Chunk* chunk);
 
+static void statement();
+static void declaration();
+
 #endif

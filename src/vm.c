@@ -39,9 +39,11 @@ void initVM(){
   vm.ip = 0;
   resetStack();
   vm.objects = NULL;
+  initTable(&vm.strings);
 }
 
 void freeVM(){
+  freeTable(&vm.strings);
   freeObjects();
 }
 
@@ -96,9 +98,12 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
     uint8_t instruction;
     switch(instruction = READ_BYTE()){
       case OP_RETURN: {
+        return INTERPRET_OK;
+      }
+      case OP_PRINT: {
         printValue(pop());
         printf("\n");
-        return INTERPRET_OK;
+        break;
       }
       case OP_NEGATE: {
         if(IS_NUMBER(peek(0))){
@@ -182,12 +187,7 @@ bool valuesEqual(Value a, Value b){
     case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
     case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
     case VAL_NIL: return true;
-    case VAL_OBJ: {
-      ObjString* aString = AS_STRING(a);
-      ObjString* bString = AS_STRING(b);
-      return aString->length == bString->length && 
-        memcmp(aString->chars, bString->chars, aString->length) == 0;
-    }
+    case VAL_OBJ:    return AS_OBJ(a) == AS_OBJ(b);
     default: return false;
   }
 }
