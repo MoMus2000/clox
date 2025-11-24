@@ -38,9 +38,11 @@ void initVM(){
   vm.chunk = NULL;
   vm.ip = 0;
   resetStack();
+  vm.objects = NULL;
 }
 
 void freeVM(){
+  freeObjects();
 }
 
 InterpretResult interpret(const char* source){
