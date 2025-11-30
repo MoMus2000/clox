@@ -33,14 +33,17 @@ void emitByte(uint8_t byte);
 void endCompiler();
 void emitReturn();
 void emitConstant(Value value);
-static void binary();
-static void unary();
-static void number();
-static void literal();
-static void handle_string();
-static void grouping();
-static void variable();
-typedef void (*ParseFn)();
+
+static void binary(bool canAssign);
+static void unary(bool canAssign);
+static void number(bool canAssign);
+static void literal(bool canAssign);
+static void handle_string(bool canAssign);
+static void grouping(bool canAssign);
+static void variable(bool canAssign);
+
+typedef void (*ParseFn)(bool canAssign);
+
 typedef struct{
   ParseFn prefix;
   ParseFn infix;
@@ -162,13 +165,18 @@ static uint32_t identifierConstant(Token* name){
   );
 }
 
-static void namedVariable(Token name){
+static void namedVariable(Token name, bool canAssign){
   uint8_t arg = identifierConstant(&name);
-  emitBytes(OP_GET_GLOBAL, arg);
+  if(canAssign && match(TOKEN_EQUAL)){
+    expression();
+    emitBytes(OP_SET_GLOBAL, arg);
+  } else{
+    emitBytes(OP_GET_GLOBAL, arg);
+  }
 }
 
-static void variable(){
-  namedVariable(parser.previous);
+static void variable(bool canAssign){
+  namedVariable(parser.previous, canAssign);
 }
 
 static uint32_t parseVariable(const char* message) {
@@ -226,7 +234,7 @@ void static advance(){
   }
 }
 
-static void handle_string(){
+static void handle_string(bool canAssign){
   copyString(parser.previous.start + 1, parser.previous.length -2);
   emitConstant(
       OBJ_VAL(
@@ -288,7 +296,7 @@ void emitReturn(){
   writeChunk(currentChunk(), OP_RETURN, parser.previous.line);
 }
 
-static void literal() {
+static void literal(bool canAssign) {
   TokenType type = parser.previous.type;
   switch(type){
     case TOKEN_FALSE: emitByte(OP_FALSE); break;
@@ -298,7 +306,7 @@ static void literal() {
   }
 }
 
-static void number(){
+static void number(bool canAssign){
   double value = strtod(parser.previous.start, NULL);
   emitConstant(NUMBER_VAL(value));
 }
@@ -311,7 +319,7 @@ void emitConstant(Value value){
   emitBytes(OP_CONSTANT, (uint8_t)index);
 }
 
-static void unary(){
+static void unary(bool canAssign){
   TokenType operatorType = parser.previous.type;
 
   parsePrecedence(PREC_UNARY); // parse unary or anything greater
@@ -323,13 +331,13 @@ static void unary(){
   }
 }
 
-static void grouping(){
+static void grouping(bool canAssign){
   // ( is already parsed
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression");
 }
 
-static void binary(){
+static void binary(bool canAssign){
   TokenType operator = parser.previous.type;
   ParseRule* rule = getRule(operator);
   parsePrecedence((Precedence)(rule->precedence+1)); // beyond the current prec
@@ -381,12 +389,18 @@ static void parsePrecedence(Precedence precedence){
     return;
   }
 
-  prefixFn();
+  bool canAssign = precedence <= PREC_ASSIGNMENT;
+
+  prefixFn(canAssign);
 
   while(precedence <= getRule(parser.current.type)->precedence) {
     advance();
     ParseFn infixFn = getRule(parser.previous.type)->infix;
-    infixFn();
+    infixFn(canAssign);
+  }
+
+  if(canAssign && match(TOKEN_EQUAL)){
+    error("Invalid Assignment Target");
   }
 
 }

@@ -118,6 +118,15 @@ disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
         pop();
         break;
       }
+      case OP_SET_GLOBAL: {
+        ObjString* name = READ_STRING();
+        if (tableSet(&vm.globals, name, peek(0))) {
+          tableDelete(&vm.globals, name);
+          runTimeError("Undefined variable");
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+      }
       case OP_GET_GLOBAL: {
         ObjString* name = READ_STRING();
         Value value;
