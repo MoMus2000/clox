@@ -5,7 +5,7 @@
 #include "scanner.h"
 #include "compiler.h"
 
-#ifdef DEBUG_PRINT_CODE
+#ifdef DEBUG_IMPLEMENTATION
 #include "debug.h"
 #endif
 
@@ -285,7 +285,7 @@ void emitByte(uint8_t byte){
 
 void endCompiler(){
   emitReturn();
-#ifdef DEBUG_PRINT_CODE
+#ifdef DEBUG_IMPLEMENTATION
   if(!parser.hadError){
      disassembleChunk(currentChunk(), "code");
   }

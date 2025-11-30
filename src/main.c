@@ -5,7 +5,6 @@
 #include "stdlib.h"
 #include "vm.h"
 
-
 static char* readFile(const char* path){
   FILE* file = fopen(path, "rb");
   if (file == NULL) {

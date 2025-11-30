@@ -8,4 +8,7 @@
 /*#define DEBUG_TRACE_EXECUTION // Passes into chunk and into VM*/
 /*#define DEBUG_PRINT_CODE*/
 
+// Use compiler flags instead
+/*-DDEBUG_IMPLEMENTATION=1*/
+
 #endif

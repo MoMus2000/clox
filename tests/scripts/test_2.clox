@@ -1,2 +1,7 @@
-var a = 1;
-a = a * 15;
+var breakfast = "Breakky";
+var dinner = " This is the good life";
+
+print breakfast + dinner;
+
+print "Hola Como Estas ?";
+
