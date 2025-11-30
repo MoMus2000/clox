@@ -6,6 +6,6 @@
 #include <stddef.h>
 
 /*#define DEBUG_TRACE_EXECUTION // Passes into chunk and into VM*/
-#define DEBUG_PRINT_CODE
+/*#define DEBUG_PRINT_CODE*/
 
 #endif
