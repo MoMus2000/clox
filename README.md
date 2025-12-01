@@ -285,4 +285,96 @@ once you have the name, use the map to retrieve the value.
 If the value does not exist throw a runtime error,
 otherwise, push the value onto the stack.
 
+## Global Var Define And Assign
 
+```
+
+We use OP_DEFINE_GLOBAL to Define Global vars
+We use OP_SET_GLOBAL to Assign Global vars
+
+In both cases we do an update to a hashmap.
+
+In the definition it is
+tableSet(&vm.globals, name, peek(0));
+
+tableSet(&vm.globals, name, peek(0))) returning
+false for a duplicate ...
+Otherwise, throw a runtime error.
+
+```
+
+### How does Parsing work ?
+
+#### Definition
+
+When a `TOKEN_VAR` is encountered by the  
+parser, it expects a variable name token next and triggers the `varDeclaration()` function.
+
+The variable name is parsed into the constants pool, and an index corresponding to its position is recorded.
+
+The parser then checks for an optional `TOKEN_EQUAL` to see if there is an initializer expression.
+
+If there is an initializer, it triggers the `expression()` function to parse and compile it;  
+otherwise, it emits the `OP_NIL` bytecode to initialize the variable with `nil`.
+
+Finally, `defineVariable()` is called, which emits the `OP_DEFINE_GLOBAL` opcode along with the index of the variable name in the constants pool, effectively defining the variable globally.
+
+
+#### Assignment
+When a `TOKEN_IDENTIFIER` is encountered by the  
+parser, it triggers the `variable()` function.
+
+The `variable()` function handles the identifier name,  
+obtains its index in the constants pool, and prepares it for code generation.
+
+Now there are two paths: either it is a variable assignment or a variable expansion.
+
+The determination is made via the `canAssign` boolean parameter.
+
+If `canAssign` is true and the next token matches `TOKEN_EQUAL`,  
+the parser consumes the `=` and parses the right-hand side expression.  
+It then emits the `OP_SET_GLOBAL` opcode with the constant pool index for the identifier name.
+
+Otherwise, it is a variable expansion, and the parser emits the `OP_GET_GLOBAL` opcode  
+with the constant pool index for the identifier name.
+
+#### Why do we need canAssign
+
+Our parser has an issue where it will allow expressions such as
+
+`5 + 3 = 4;`
+
+or things like:
+
+`menu.brunch(sunday).beverage = "mimosa";`
+
+In the second case:  
+Our bytecode VM uses a single-pass compiler. It parses and generates bytecode on the fly without building an intermediate AST. As soon as it recognizes a piece of syntax, it emits code for it. Assignment doesn’t naturally fit that.
+
+In this code, the parser doesn’t realize `menu.brunch(sunday).beverage` is the target of an assignment and not a normal expression until it reaches the `=`, many tokens after the first `menu`. By then, the compiler has already emitted bytecode for the whole thing.
+
+We address this via:
+
+```c
+if (canAssign && match(TOKEN_EQUAL)) {
+  expression();
+  emitBytes(OP_SET_GLOBAL, arg);
+} else {
+  emitBytes(OP_GET_GLOBAL, arg);
+}
+```
+
+#### How does canAssign work?
+
+Under `parsePrecedence`, we pass a boolean `canAssign` which is true only when the current parsing precedence is at least `PREC_ASSIGNMENT`.
+
+We then call our prefix and infix parsing functions with that parameter.
+
+When parsing expressions with precedence lower than `PREC_ASSIGNMENT`, if an assignment is attempted, it will be caught by this check:
+
+```c
+if (canAssign && match(TOKEN_EQUAL)) {
+  error("Invalid assignment target.");
+}
+```
+This prevents invalid assignments like 5 + 3 = 4 from compiling.
