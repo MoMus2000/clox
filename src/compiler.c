@@ -5,6 +5,8 @@
 #include "scanner.h"
 #include "compiler.h"
 
+#define UINT8_COUNT (UINT8_MAX + 1)
+
 #ifdef DEBUG_IMPLEMENTATION
 #include "debug.h"
 #endif
@@ -57,6 +59,17 @@ void emitBytes(uint8_t byte1, uint8_t byte2){
 }
 
 typedef struct {
+  Token name;
+  int depth;
+} Local;
+
+typedef struct {
+  Local locals[UINT8_COUNT];
+  int localCount;
+  int scopeDepth;
+} Compiler;
+
+typedef struct {
   Token previous;
   Token current;
   bool  hadError;
@@ -67,9 +80,15 @@ static Chunk* compilingChunk;
 
 Parser parser;
 
+Compiler* current = NULL;
 
 static void parsePrecedence(Precedence);
 
+static void initCompiler(Compiler* compiler){
+  compiler->scopeDepth = 0;
+  compiler->localCount = 0;
+  current = compiler;
+}
 
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN] = {grouping, NULL, PREC_NONE},
@@ -124,9 +143,28 @@ static void expressionStatement(){
   emitByte(OP_POP);
 }
 
+static void block(){
+  while(!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)){
+    declaration();
+  }
+  consume(TOKEN_RIGHT_BRACE, "Expect } after block");
+}
+
+static void beginScope(){
+  current->scopeDepth ++;
+}
+static void endScope(){
+  current->scopeDepth --;
+}
+
 static void statement(){
   if(match(TOKEN_PRINT)){
     printStatement();
+  }
+  else if (match(TOKEN_LEFT_BRACE)){
+    beginScope();
+    block();
+    endScope();
   }
   else {
     expressionStatement();
@@ -135,9 +173,9 @@ static void statement(){
 
 static void synchronize() {
   parser.panicMode = false;
-  while(parser.current.type != TOKEN_EOF){
-    if(parser.previous.type == TOKEN_SEMICOLON) return;
-    switch(parser.current.type){
+  while (parser.current.type != TOKEN_EOF) {
+    if (parser.previous.type == TOKEN_SEMICOLON) return;
+    switch (parser.current.type) {
       case TOKEN_CLASS:
       case TOKEN_FUN:
       case TOKEN_VAR:
@@ -148,7 +186,7 @@ static void synchronize() {
       case TOKEN_RETURN:
         return;
       default:
-        ; // Do nothing
+        break;
     }
     advance();
   }
@@ -213,6 +251,8 @@ static void declaration() {
 
 bool compile(const char* source, Chunk* chunk){
   initScanner(source);
+  Compiler compiler;
+  initCompiler(&compiler);
   compilingChunk = chunk;
   parser.hadError  = false;
   parser.panicMode = false;
